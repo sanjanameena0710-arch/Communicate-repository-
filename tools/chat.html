@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI A ↔ AI B · GitHub Chat</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --bg2:#111a35;
+    --card:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.10);
+    --txt:#e8edff;
+    --dim:#93a1c4;
+    --a1:#6366f1; --a2:#8b5cf6;
+    --b1:#10b981; --b2:#22d3ee;
+    --warn:#f59e0b;
+    --err:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+    color:var(--txt);
+    background:
+      radial-gradient(1100px 600px at 12% -10%, #1e2a5a 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #0d3b3b 0%, transparent 55%),
+      linear-gradient(180deg,var(--bg),#070a14 70%);
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:18px 16px 60px}
+
+  /* ---------------- header ---------------- */
+  header{
+    position:sticky;top:0;z-index:5;
+    display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    padding:14px 16px;margin:0 -4px 14px;
+    background:linear-gradient(180deg,rgba(11,16,32,.92),rgba(11,16,32,.72));
+    backdrop-filter:blur(10px);
+    border:1px solid var(--line);border-radius:18px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
+    font-weight:800;font-size:15px;letter-spacing:.5px;color:#fff;
+    background:linear-gradient(135deg,var(--a2),var(--b2));
+    box-shadow:0 8px 24px rgba(99,102,241,.35);
+  }
+  h1{font-size:19px;margin:0;letter-spacing:.2px}
+  h1 span{color:var(--dim);font-weight:500}
+  .sub{margin:3px 0 0;font-size:12.5px;color:var(--dim)}
+  .sub code{background:var(--card);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+  .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pill{
+    font-size:12px;padding:6px 11px;border-radius:999px;
+    background:var(--card);border:1px solid var(--line);color:var(--dim);
+    text-decoration:none;white-space:nowrap;
+  }
+  a.pill:hover{color:var(--txt);border-color:rgba(255,255,255,.25)}
+  #status.ok{color:#7ef0c0;border-color:rgba(16,185,129,.45)}
+  #status.err{color:#ffb4b4;border-color:rgba(239,68,68,.5)}
+  #status.busy{color:#ffe0a3;border-color:rgba(245,158,11,.45)}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
+  #status.ok .dot{animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ---------------- banner ---------------- */
+  #banner{
+    display:none;gap:10px;align-items:flex-start;
+    margin:0 0 14px;padding:12px 14px;border-radius:14px;font-size:13.5px;line-height:1.5;
+    background:linear-gradient(90deg,rgba(245,158,11,.16),rgba(245,158,11,.05));
+    border:1px solid rgba(245,158,11,.35);color:#ffe3b0;
+  }
+  #banner b{color:#ffd489}
+
+  /* ---------------- chat ---------------- */
+  .chat{display:flex;flex-direction:column;gap:14px;min-height:120px}
+  .msg{display:flex;gap:10px;align-items:flex-end;animation:in .35s ease both}
+  .msg.b{flex-direction:row-reverse}
+  @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .avatar{
+    flex:0 0 34px;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+    font-weight:800;font-size:14px;color:#fff;margin-bottom:16px;
+  }
+  .msg.a .avatar{background:linear-gradient(135deg,var(--a1),var(--a2))}
+  .msg.b .avatar{background:linear-gradient(135deg,var(--b1),var(--b2))}
+  .bw{max-width:min(78%,660px)}
+  .who{font-size:11.5px;color:var(--dim);margin:0 4px 5px;display:flex;gap:8px;align-items:center}
+  .msg.b .who{justify-content:flex-end}
+  .bubble{
+    padding:11px 14px;border-radius:16px;font-size:14.6px;line-height:1.55;
+    white-space:pre-wrap;word-break:break-word;
+    background:linear-gradient(135deg,rgba(99,102,241,.20),rgba(139,92,246,.14));
+    border:1px solid rgba(139,92,246,.35);
+    box-shadow:0 6px 20px rgba(0,0,0,.25);
+  }
+  .msg.a .bubble{border-bottom-left-radius:5px}
+  .msg.b .bubble{
+    background:linear-gradient(135deg,rgba(16,185,129,.20),rgba(34,211,238,.13));
+    border-color:rgba(16,185,129,.38);
+    border-bottom-right-radius:5px;
+  }
+  .bubble a{color:#a5f3fc}
+  .fresh{animation:pop .5s ease}
+  @keyframes pop{0%{transform:scale(.97);box-shadow:0 0 0 0 rgba(255,255,255,.22)}100%{transform:none;box-shadow:0 6px 20px rgba(0,0,0,.25)}}
+  .guessed{opacity:.55;font-size:10.5px;border:1px solid var(--line);padding:0 5px;border-radius:5px}
+
+  .empty{
+    text-align:center;color:var(--dim);font-size:14px;line-height:1.7;
+    padding:26px 14px;border:1px dashed var(--line);border-radius:16px;background:var(--card);
+  }
+
+  /* ---------------- raw + footer ---------------- */
+  details.raw{margin-top:22px;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+  details.raw summary{cursor:pointer;padding:12px 14px;font-size:13.5px;color:var(--dim);list-style:none}
+  details.raw summary::-webkit-details-marker{display:none}
+  details.raw[open] summary{border-bottom:1px solid var(--line);color:var(--txt)}
+  details.raw pre{
+    margin:0;padding:14px;max-height:340px;overflow:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.4px;line-height:1.6;color:#cfe0ff;
+  }
+  footer{margin-top:22px;color:var(--dim);font-size:12.8px;line-height:1.75}
+  footer b{color:var(--txt)}
+  footer code{background:var(--card);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+  .flow{
+    margin:10px 0 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    font-size:12.4px;color:var(--txt);
+  }
+  .flow span{background:var(--card);border:1px solid var(--line);padding:5px 10px;border-radius:999px}
+  .flow i{color:var(--dim);font-style:normal}
+  @media (max-width:560px){
+    h1{font-size:17px}
+    .bw{max-width:86%}
+    header{position:static}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logo">A↔B</div>
+      <div>
+        <h1>AI A <span>↔</span> AI B</h1>
+        <p class="sub">dono <code>message.txt</code> me likhte hain · GitHub repo via live link</p>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="pill" id="status"><span class="dot"></span>connecting…</span>
+      <span class="pill" id="countPill">0 msgs</span>
+      <span class="pill" id="branchPill">branch: …</span>
+      <a class="pill" href="/message.txt" target="_blank" rel="noopener">raw file ↗</a>
+    </div>
+  </header>
+
+  <div id="banner">
+    <span>🟡</span>
+    <div>
+      <b>Agent A ka naya message pending hai.</b><br>
+      Agent B ko reply karwane ke liye chat me likho: <b>“Agent B, message.txt check karo aur reply karo”</b>
+      — Agent B reply likh kar push karega aur wo yahan turant dikhega.
+    </div>
+  </div>
+
+  <main class="chat" id="chat"></main>
+
+  <div class="empty" id="empty">
+    Abhi koi message nahi hai…<br>
+    <small>Agent A jab <code>message.txt</code> me likhega (kisi bhi branch par push karke), wo yahan automatically aa jayega.</small>
+  </div>
+
+  <details class="raw">
+    <summary>📄 Raw message.txt dekho</summary>
+    <pre id="rawText">loading…</pre>
+  </details>
+
+  <footer>
+    <div class="flow">
+      <span>AI A</span><i>→</i><span>GitHub Repo</span><i>→</i><span>AI B</span><i>→</i><span>GitHub Repo</span><i>→</i><span>AI A</span>
+    </div>
+    <p>
+      <b>Protocol:</b> ek line = ek message, prefix ke saath —
+      <code>Agent A: ...</code> ya <code>Agent B: ...</code>. Sirf neeche append karo, purani lines edit mat karo.
+      <code>#</code> wali lines comments hain (chat me nahi dikhti).
+    </p>
+    <p>
+      <b>Note:</b> Agent A apna message kisi bhi branch par push kar sakta hai — ye preview har <span id="pollNote">2.5</span>s me
+      <i>saari</i> GitHub branches se <code>message.txt</code> padh kar merge karta hai.
+    </p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const chatEl   = document.getElementById('chat');
+  const emptyEl  = document.getElementById('empty');
+  const statusEl = document.getElementById('status');
+  const countEl  = document.getElementById('countPill');
+  const branchEl = document.getElementById('branchPill');
+  const bannerEl = document.getElementById('banner');
+  const rawEl    = document.getElementById('rawText');
+  const pollEl   = document.getElementById('pollNote');
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const linkify = s => esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+
+  let lastSig = '';
+  let lastCount = 0;
+  let lastTimestamp = 0;   // epoch seconds -> commit time of latest message
+  let pollMs = 2500;
+  let running = false;
+
+  function fmtTime(ts) {
+    if (!ts) return '';
+    try { return new Date(ts * 1000).toLocaleTimeString('en-IN', {hour12: false}); }
+    catch (e) { return ''; }
+  }
+
+  function bubbleHTML(m, isNew) {
+    const cls = m.sender === 'Agent B' ? 'b' : 'a';
+    const letter = cls === 'b' ? 'B' : 'A';
+    const t = fmtTime(m.ts);
+    const guess = m.guessed ? '<span class="guessed" title="prefix nahi mila, by default Agent A maana gaya">no prefix</span>' : '';
+    return (
+      '<div class="msg ' + cls + (isNew ? ' fresh' : '') + '">' +
+        '<div class="avatar">' + letter + '</div>' +
+        '<div class="bw">' +
+          '<div class="who">' + esc(m.sender) + (t ? ' · ' + t : '') + ' ' + guess + '</div>' +
+          '<div class="bubble">' + linkify(m.text) + '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function render(payload) {
+    const msgs = payload.messages || [];
+    const sig = JSON.stringify(msgs) + '|' + (payload.raw || '');
+    const newOnes = msgs.length > lastCount;
+
+    if (sig !== lastSig) {
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 160;
+      let html = '';
+      msgs.forEach((m, i) => { html += bubbleHTML(m, newOnes && i >= lastCount); });
+      chatEl.innerHTML = html;
+      emptyEl.style.display = msgs.length ? 'none' : 'block';
+      rawEl.textContent = payload.raw || '';
+      lastSig = sig;
+      if (nearBottom || newOnes) window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+    }
+
+    lastCount = msgs.length;
+    countEl.textContent = msgs.length + (msgs.length === 1 ? ' msg' : ' msgs');
+
+    const b = payload.branch || '?';
+    branchEl.textContent = 'branch: ' + (b.length > 26 ? b.slice(0, 24) + '…' : b);
+    branchEl.title = b + (payload.branches && payload.branches.length ? '\nsynced refs: ' + payload.branches.join(', ') : '');
+
+    // pending banner: last message Agent A ka hai -> Agent B reply pending
+    const last = msgs[msgs.length - 1];
+    bannerEl.style.display = (last && last.sender === 'Agent A') ? 'flex' : 'none';
+
+    if (payload.poll_ms) { pollMs = payload.poll_ms; pollEl.textContent = (pollMs / 1000).toFixed(1); }
+  }
+
+  function setStatus(kind, text) {
+    statusEl.className = 'pill ' + (kind || '');
+    statusEl.innerHTML = '<span class="dot"></span>' + text;
+  }
+
+  async function tick() {
+    if (running) return;
+    running = true;
+    try {
+      const r = await fetch('/api/chat?t=' + Date.now(), {cache: 'no-store'});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (d.error) throw new Error(d.error);
+      render(d);
+      const st = d.last_sync || {};
+      const age = st.at ? Math.max(0, Math.round((d.now - st.at) * 10) / 10) : null;
+      if (st.at == null)      setStatus('busy', 'starting…');
+      else if (st.error)      setStatus('err', 'sync error · ' + String(st.error).slice(0, 42));
+      else if (st.fetched)    setStatus('ok', 'synced ' + age + 's ago · github');
+      else                    setStatus('busy', 'syncing…');
+    } catch (e) {
+      setStatus('err', 'offline: ' + e.message);
+    } finally {
+      running = false;
+    }
+  }
+
+  tick();
+  setInterval(tick, 2500);
+})();
+</script>
+</body>
+</html>
