@@ -41,8 +41,13 @@ BRANCH = os.environ.get("AGENT_B_BRANCH", DEFAULT_BRANCH)
 
 # "Agent A: hello" / "A: hello" / "**Agent A** - hello" sab match karega
 SENDER_RE = re.compile(
-    r"^\s*[*_`>\s]*\s*(?:agent[\s\-_]*)?([abAB])\s*[*_`]*\s*[:>\-]+\s*(.+?)\s*$"
+    r"^\s*[*_`>\s]*\s*(?:agent[\s\-_]*)?([abAB])\s*[*_`]*\s*[:>\-]+\s*(.+?)\s*$",
+    re.IGNORECASE,
 )
+
+# Sabhi branches fetch karne ke liye explicit refspec (clone single-branch ho tab bhi
+# ye poora refspec force karta hai).
+FETCH_REFSPEC = "+refs/heads/*:refs/remotes/origin/*"
 
 _LOCK = threading.Lock()
 
@@ -68,6 +73,18 @@ def git(*args, timeout=90):
         text=True,
         timeout=timeout,
     )
+
+
+def fetch_all(timeout=90):
+    """
+    GitHub se SAARI branches laao. Clone ka remote.origin.fetch refspec
+    single-branch ho sakta hai, isliye refspec explicitly dete hain.
+    """
+    p = git("fetch", "--prune", "origin", FETCH_REFSPEC, timeout=timeout)
+    if p.returncode == 0:
+        return p
+    # fallback: purana/limited git
+    return git("fetch", "--prune", "origin", timeout=timeout)
 
 
 def remote_refs():
@@ -162,6 +179,9 @@ def parse_chat(text):
 def merge_texts(local_text, remote_texts):
     """Local file + saari remote versions ka append-only union."""
     merged = [ln.rstrip() for ln in normalize_newlines(local_text).split("\n")]
+    # trailing blank lines hata do, taki naye messages seedhe neeche append hon
+    while merged and not merged[-1].strip():
+        merged.pop()
     seen = {message_key(m) for m in parse_chat(local_text)}
     added = 0
     for rtext in remote_texts:
@@ -245,7 +265,7 @@ def commit_and_push(max_attempts=4):
             break
         out["error"] = (p.stderr or p.stdout or "").strip()[-300:]
         # remote aage nikal gaya -> fetch + rebase + dobara merge, phir retry
-        git("fetch", "--prune", "origin")
+        fetch_all()
         if remote_branch_exists():
             rb = git("rebase", f"origin/{BRANCH}")
             if rb.returncode != 0:
@@ -270,7 +290,7 @@ def sync_once(push=True, verbose=False):
             "branches": [],
         }
         try:
-            p = git("fetch", "--prune", "origin")
+            p = fetch_all()
             if p.returncode != 0:
                 raise RuntimeError("git fetch failed: " + (p.stderr or "").strip()[-200:])
             st["fetched"] = True
