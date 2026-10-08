@@ -40,6 +40,15 @@ check(
     [("Agent A", "time 10:30, note: ok")],
 )
 check("emoji", snd("Agent B: bho bho 🐶"), [("Agent B", "bho bho 🐶")])
+# ---- Agent A ke server ka format (server.py ka LINE_RE) ----
+check("agentA bracket no colon", snd("[AI A] Hallo"), [("Agent A", "Hallo")])
+check("agentA bracket colon", snd("[AI A]: Hallo"), [("Agent A", "Hallo")])
+check("agentB bracket", snd("[AI B] Hallo! Kaise ho?"), [("Agent B", "Hallo! Kaise ho?")])
+check("bracket long form", snd("[Agent B]: hi"), [("Agent B", "hi")])
+check("short bracket", snd("[B] hi"), [("Agent B", "hi")])
+check("mixed both formats", snd("[AI A] yo\nAgent B: hi\n[A] bye"),
+      [("Agent A", "yo"), ("Agent B", "hi"), ("Agent A", "bye")])
+check("format_message", s.format_message("hey A", "B"), "[AI B] hey A")
 check("no prefix -> Agent A (guessed)", snd("hello agent b"), [("Agent A", "hello agent b")])
 check("comments skipped", snd("# comment\nAgent A: real"), [("Agent A", "real")])
 check("blank lines skipped", snd("\n\nAgent A: x\n\n"), [("Agent A", "x")])

@@ -39,11 +39,37 @@ MSG_FILE = "message.txt"
 DEFAULT_BRANCH = "arena/cd9c3d1e-communicate-repository"
 BRANCH = os.environ.get("AGENT_B_BRANCH", DEFAULT_BRANCH)
 
-# "Agent A: hello" / "A: hello" / "**Agent A** - hello" sab match karega
+# Sender line ke saare accepted forms:
+#   [AI A] hello        [AI B]: hello      [Agent A] hello     [A] hello   <- Agent A ka format
+#   Agent A: hello      AI B: hello        B: hello            **Agent B**: hello
+# Group 1/2/3 = A ya B, group 4 = message text.
+_SEP = r"[:\-\u2013\u2014]"
 SENDER_RE = re.compile(
-    r"^\s*[*_`>\s]*\s*(?:agent[\s\-_]*)?([abAB])\s*[*_`]*\s*[:>\-]+\s*(.+?)\s*$",
+    r"^\s*[\s*_`>#]*\s*"
+    r"(?:"
+    r"\[\s*(?:(?:agent|ai)\s*[\s\-_]*)?([abAB])\s*\]\s*[*_`]*\s*(?:" + _SEP + r"+)?\s*"
+    r"|(?:agent|ai)\s*[\s\-_]*([abAB])\s*[*_`]*\s*" + _SEP + r"+\s*"
+    r"|([abAB])\s*[*_`]*\s*" + _SEP + r"+\s*"
+    r")"
+    r"(.+?)\s*$",
     re.IGNORECASE,
 )
+
+
+def match_sender(line):
+    """Line se (sender, text) nikalo; prefix na ho to (None, line)."""
+    m = SENDER_RE.match(line)
+    if not m:
+        return None, line
+    letter = (m.group(1) or m.group(2) or m.group(3)).upper()
+    return ("Agent A" if letter == "A" else "Agent B"), m.group(4).strip()
+
+
+def format_message(text, sender="B"):
+    """Chat me likhne ka canonical format: [AI B] <text>  (Agent A ka parser bhi ise padhta hai)."""
+    letter = str(sender).strip().upper()[-1]
+    letter = "A" if letter == "A" else "B"
+    return f"[AI {letter}] {text.strip()}"
 
 # Sabhi branches fetch karne ke liye explicit refspec (clone single-branch ho tab bhi
 # ye poora refspec force karta hai).
@@ -162,14 +188,10 @@ def parse_chat(text):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        m = SENDER_RE.match(line)
-        if m:
-            letter = m.group(1).upper()
-            sender = "Agent A" if letter == "A" else "Agent B"
-            body = m.group(2).strip()
-            guessed = False
-        else:
-            sender, body, guessed = "Agent A", line, True
+        sender, body = match_sender(line)
+        guessed = sender is None
+        if guessed:
+            sender = "Agent A"  # prefix nahi hai -> by default Agent A maan lete hain
         msgs.append(
             {"sender": sender, "text": body, "raw": line, "guessed": guessed}
         )
@@ -275,6 +297,18 @@ def commit_and_push(max_attempts=4):
     return out
 
 
+def append_message(text, sender="B"):
+    """Local message.txt me ek naya line append karo aur GitHub par publish karo."""
+    line = format_message(text, sender)
+    cur = read_local()
+    if cur and not cur.endswith("\n"):
+        cur += "\n"
+    write_local(cur + line + "\n")
+    res = commit_and_push()
+    res["line"] = line
+    return res
+
+
 # -------------------------------------------------------------------- driver
 def sync_once(push=True, verbose=False):
     """Ek pura sync cycle. STATUS dict return karta hai."""
@@ -334,7 +368,15 @@ def main():
     ap.add_argument("--loop", action="store_true", help="continuously sync karo")
     ap.add_argument("--interval", type=float, default=6.0, help="loop interval (sec)")
     ap.add_argument("--no-push", action="store_true", help="sirf fetch+merge, push mat karo")
+    ap.add_argument("--say", metavar="TEXT", help="Agent B ke roop me naya message likho + push karo")
+    ap.add_argument("--say-as", default="B", choices=["A", "B"], help="kis agent ke roop me (default B)")
     args = ap.parse_args()
+
+    if args.say:
+        sync_once(push=True)
+        res = append_message(args.say, sender=args.say_as)
+        print(json.dumps(res, indent=2, default=str), flush=True)
+        raise SystemExit(0 if res["pushed"] else 1)
 
     if args.loop:
         sync_loop(interval=args.interval, verbose=True)
