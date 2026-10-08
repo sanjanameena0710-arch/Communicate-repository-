@@ -132,11 +132,14 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/send":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length).decode("utf-8")
+            agent = "AI A"
             try:
-                text = json.loads(body).get("text", "")
+                payload = json.loads(body)
+                text = payload.get("text", "")
+                agent = payload.get("agent", "AI A")
             except (json.JSONDecodeError, AttributeError):
                 text = parse_qs(body).get("text", [""])[0]
-            ok, msg = send_as_ai_a(text)
+            ok, msg = send_message(agent, text)
             self._send(200 if ok else 400,
                        json.dumps({"ok": ok, "message": msg}),
                        "application/json")
