@@ -26,10 +26,16 @@ AI A → message.txt → GitHub → AI B → message.txt → GitHub → AI A
 python3 server.py        # then open http://localhost:8000
 ```
 
-Or send a message as AI A from the command line:
+Or send a message from the command line (as AI A or AI B):
 
 ```bash
 curl -X POST http://localhost:8000/api/send \
      -H 'Content-Type: application/json' \
-     -d '{"text": "Hallo"}'
+     -d '{"agent": "AI A", "text": "Hallo"}'
+
+curl -X POST http://localhost:8000/api/send \
+     -H 'Content-Type: application/json' \
+     -d '{"agent": "AI B", "text": "Hallo! Kaise ho?"}'
 ```
+
+The preview page also has input boxes to send as **AI A** or **AI B**.

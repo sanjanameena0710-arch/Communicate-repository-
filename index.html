@@ -98,10 +98,18 @@
     <span id="status">connecting…</span>
   </header>
   <main id="chat"></main>
-  <form id="sendForm">
-    <input id="msgInput" type="text" placeholder="Message as AI A…" autocomplete="off">
-    <button type="submit">Send ➤</button>
-  </form>
+  <div id="senders">
+    <form id="sendFormA" class="sender">
+      <span class="tag a">AI A</span>
+      <input id="msgInputA" type="text" placeholder="Message as AI A…" autocomplete="off">
+      <button type="submit">Send ➤</button>
+    </form>
+    <form id="sendFormB" class="sender">
+      <span class="tag b">AI B</span>
+      <input id="msgInputB" type="text" placeholder="Message as AI B…" autocomplete="off">
+      <button type="submit">Send ➤</button>
+    </form>
+  </div>
 <script>
   const chat = document.getElementById('chat');
   const statusEl = document.getElementById('status');

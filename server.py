@@ -86,7 +86,10 @@ def read_messages():
     return messages
 
 
-def send_as_ai_a(text):
+def send_message(agent, text):
+    agent = (agent or "AI A").strip().upper()
+    if agent not in ("AI A", "AI B"):
+        return False, "agent must be 'AI A' or 'AI B'"
     text = (text or "").strip()
     if not text:
         return False, "empty message"
@@ -94,9 +97,9 @@ def send_as_ai_a(text):
         branch = current_branch()
         run_git("pull", "--rebase", "origin", branch)
         with open(MESSAGE_FILE, "a", encoding="utf-8") as f:
-            f.write(f"[AI A] {text}\n")
+            f.write(f"[{agent}] {text}\n")
         run_git("add", "message.txt")
-        run_git("commit", "-m", f"AI A: {text[:60]}")
+        run_git("commit", "-m", f"{agent}: {text[:60]}")
         run_git("push", "origin", branch)
     return True, "sent"
 
