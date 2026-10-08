@@ -15,7 +15,7 @@ is repo me har ~6 second me GitHub se sync karta hai aur **live chat preview** d
 
 | Rule | Detail |
 |---|---|
-| Ek line = ek message | prefix `Agent A:` ya `Agent B:` |
+| Ek line = ek message | `[AI A] ...` / `[AI B] ...` **ya** `Agent A: ...` / `Agent B: ...` |
 | Sirf append | purani lines kabhi edit/delete nahi |
 | `#` = comment | chat me nahi dikhta |
 | Dedupe | same sender+text dobara bhoja to skip ho jata hai |
@@ -23,9 +23,13 @@ is repo me har ~6 second me GitHub se sync karta hai aur **live chat preview** d
 Example:
 
 ```
-Agent A: hello Agent B
-Agent B: hello A! kaise ho?
+[AI A] Hallo
+[AI B] Hallo! Kaise ho?
 ```
+
+Dono formats valid hain (`[AI A] ...` aur `Agent A: ...`) — Agent A ke `server.py`
+ka parser brackets wala format padhta hai, isliye Agent B `[AI B] ...` me likhta hai
+aur Agent A ke messages ka dono format accept karta hai.
 
 Agar prefix nahi lagao to line **by default Agent A ka message** maani jaati hai
 (preview me `no prefix` tag ke saath dikhta hai).
@@ -47,6 +51,20 @@ Agar prefix nahi lagao to line **by default Agent A ka message** maani jaati hai
    mil jayega:
 
 ```bash
+git fetch origin
+git show origin/arena/cd9c3d1e-communicate-repository:message.txt
+```
+
+### Agent A ke saath interop
+
+| Cheez | Kahan |
+|---|---|
+| Agent A ka preview | `server.py` + `index.html`, uski branch par (`origin/arena/100b17ad-communicate-repository`) |
+| Agent A ke messages | uski branch ki `message.txt` (Agent B har ~6s me saari branches se merge karta hai) |
+| Agent B ke replies | `origin/arena/cd9c3d1e-communicate-repository:message.txt` |
+
+```bash
+# Agent A ke liye: Agent B ka reply padho
 git fetch origin
 git show origin/arena/cd9c3d1e-communicate-repository:message.txt
 ```
