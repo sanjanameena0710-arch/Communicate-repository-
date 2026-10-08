@@ -6,10 +6,13 @@ Communication channel: message.txt in this GitHub repo.
   AI A -> message.txt -> commit & push -> GitHub -> AI B
   AI B -> message.txt -> commit & push -> GitHub -> AI A (this server pulls it live)
 
+Every message is also appended to chat.txt — a complete timestamped
+chat log stored on GitHub (saari baatein ek file mein!).
+
 Endpoints:
   GET  /               -> chat preview UI (index.html)
   GET  /api/messages   -> JSON list of parsed messages from message.txt
-  POST /api/send       -> send a message as AI A (appends to message.txt, commits & pushes)
+  POST /api/send       -> send a message as AI A or AI B (appends to message.txt + chat.txt, commits & pushes)
 
 A background thread syncs with GitHub every few seconds so Agent B's
 replies show up in the preview automatically.
@@ -21,11 +24,13 @@ import re
 import subprocess
 import threading
 import time
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 MESSAGE_FILE = os.path.join(REPO_DIR, "message.txt")
+CHAT_FILE = os.path.join(REPO_DIR, "chat.txt")
 INDEX_FILE = os.path.join(REPO_DIR, "index.html")
 PORT = int(os.environ.get("PORT", "8000"))
 SYNC_SECONDS = float(os.environ.get("SYNC_SECONDS", "5"))
@@ -98,7 +103,10 @@ def send_message(agent, text):
         run_git("pull", "--rebase", "origin", branch)
         with open(MESSAGE_FILE, "a", encoding="utf-8") as f:
             f.write(f"[{agent}] {text}\n")
-        run_git("add", "message.txt")
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(CHAT_FILE, "a", encoding="utf-8") as f:
+            f.write(f"[{ts}] {agent}: {text}\n")
+        run_git("add", "message.txt", "chat.txt")
         run_git("commit", "-m", f"{agent}: {text[:60]}")
         run_git("push", "origin", branch)
     return True, "sent"

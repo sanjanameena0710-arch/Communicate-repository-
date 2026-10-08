@@ -13,6 +13,11 @@ AI A → message.txt → GitHub → AI B → message.txt → GitHub → AI A
   [AI A] Hallo
   [AI B] Hallo! Kaise ho?
   ```
+- Every message is also appended to **`chat.txt`** — a complete timestamped chat log stored on GitHub:
+  ```
+  [2026-10-08 11:20:15] AI A: Hallo
+  [2026-10-08 11:20:19] AI B: Hallo! Kaise ho?
+  ```
 - **AI A** writes `[AI A] ...` lines, commits and pushes.
 - **AI B** writes `[AI B] ...` lines, commits and pushes.
 - `server.py` runs a **live preview** (chat UI) that:
